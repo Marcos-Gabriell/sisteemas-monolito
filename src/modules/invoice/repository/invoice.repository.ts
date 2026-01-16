@@ -1,67 +1,65 @@
-import Address from "../../@shared/domain/value-object/address";
 import Id from "../../@shared/domain/value-object/id.value-object";
-import Invoice from "../domain/invoice.entity";
-import Product from "../domain/product.entity";
+import Invoice from "../domain/invoice";
+import InvoiceItems from "../domain/invoiceItems";
 import InvoiceGateway from "../gateway/invoice.gateway";
 import { InvoiceModel } from "./invoice.model";
-import { ProductModel } from "./product.model";
+import { InvoiceItemsModel } from "./invoiceItem.model";
 
 export default class InvoiceRepository implements InvoiceGateway {
 
-  async generate(invoice: Invoice): Promise<void> {
+  async generate(entity: Invoice): Promise<void> {
+
     await InvoiceModel.create({
-      id: invoice.id.id,
-      name: invoice.name,
-      document: invoice.document,
-      street: invoice.address.street,
-      number: invoice.address.number,
-      complement: invoice.address.complement,
-      city: invoice.address.city,
-      state: invoice.address.state,
-      zipCode: invoice.address.zipCode,
-      items: invoice.items.map((item) => {
-        return new ProductModel({
-          id: item.id.id,
-          name: item.name,
-          price: item.price,
-        })
-      }),
-      total: invoice.total,
-      createdAt: invoice.createdAt,
-      updatedAt: invoice.updatedAt,
+      id: entity.id.id,
+      name: entity.name,
+      document: entity.document,
+      street: entity.street,
+      number: entity.number,
+      complement: entity.complement,
+      city: entity.city,
+      state: entity.state,
+      zipcode: entity.zipCode,
+      items: entity.items.map(item => ({
+        id: item.id.id,
+        name: item.name,
+        price: item.price,
+      })),
+      createdAt: entity.createdAt,
+      updatedAt: entity.updatedAt
     },
-    {include: [ProductModel]});
+    {
+      include: [InvoiceItemsModel],
+    })
   }
-  
+
   async find(id: string): Promise<Invoice> {
+
     const invoice = await InvoiceModel.findOne({
       where: { id },
-      include: [ProductModel],
+      include: [InvoiceItemsModel],
     });
 
     if (!invoice) {
-      throw new Error(`Invoice with id ${id} not found`);
+      throw new Error("Invoice not found")
     }
-
+    const items = invoice.items.map(item => new InvoiceItems({
+      id: new Id(item.id),
+      name: item.name,
+      price: item.price
+    }));
+    
     return new Invoice({
-      id: new Id(invoice.id),
       name: invoice.name,
       document: invoice.document,
-      address: new Address({
-        street: invoice.street,
-        number: invoice.number,
-        complement: invoice.complement,
-        city: invoice.city,
-        state: invoice.state,
-        zipCode: invoice.zipCode,  
-      }),
-      items: invoice.items.map((item) => {
-        return new Product({
-          id: new Id(item.id),
-          name: item.name,
-          price: item.price,
-        })
-      }),
-    });
+      street: invoice.street,
+      number: invoice.number,
+      complement: invoice.complement,
+      city: invoice.city,
+      state: invoice.state,
+      zipCode: invoice.zipcode,
+      items: items,
+      createdAt: invoice.createdAt,
+      updatedAt: invoice.createdAt
+    })
   }
 }

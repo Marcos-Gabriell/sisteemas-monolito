@@ -1,31 +1,42 @@
+
+import Address from "../../../@shared/domain/value-object/address";
+import Id from "../../../@shared/domain/value-object/id.value-object";
+import InvoiceItems from "../../domain/invoiceItems";
 import InvoiceGateway from "../../gateway/invoice.gateway";
-import {
-  FindInvoiceUseCaseInputDTO,
-  FindInvoiceUseCaseOutputDTO,
-} from "./find-invoice.usecase.dto";
+import { FindInvoiceUseCaseInputDTO, FindInvoiceUseCaseOutputDTO } from "./find-invoice.usecase.dto";
 
 export default class FindInvoiceUseCase {
-  private _invoiceRepository: InvoiceGateway;
+
+  private _invoiceRepository: InvoiceGateway
 
   constructor(invoiceRepository: InvoiceGateway) {
-    this._invoiceRepository = invoiceRepository;
+    this._invoiceRepository = invoiceRepository
   }
 
   async execute(input: FindInvoiceUseCaseInputDTO): Promise<FindInvoiceUseCaseOutputDTO> {
-    const invoice = await this._invoiceRepository.find(input.id);
+
+    const result = await this._invoiceRepository.find(input.id);
+    const items = result.items.map(item => ({
+      id: item.id.id, 
+      name: item.name,
+      price: item.price,
+    }));
 
     return {
-      id: invoice.id.id,
-      name: invoice.name,
-      document: invoice.document,
-      address: invoice.address,
-      items: invoice.items.map((item) => ({
-        id: item.id.id,
-        name: item.name,
-        price: item.price,
-      })),      
-      total: invoice.total,
-      createdAt: invoice.createdAt,      
-    };
+      id: result.id.id,
+      name: result.name,
+      document: result.document,
+      address: new Address({
+        street: result.street,
+        number: result.number,
+        complement: result.complement,
+        city: result.city,
+        state: result.state,
+        zipCode: result.zipCode,
+      }),
+      items: items,
+      createdAt: result.createdAt,
+      total: items.reduce((sum, item) => sum + item.price, 0) 
+    }
   }
 }

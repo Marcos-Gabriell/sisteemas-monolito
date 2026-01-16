@@ -1,62 +1,66 @@
-import Address from "../../../@shared/domain/value-object/address";
-import Id from "../../../@shared/domain/value-object/id.value-object";
-import Invoice from "../../domain/invoice.entity";
-import Product from "../../domain/product.entity";
+import Address from "../../../@shared/domain/value-object/address"
+import Id from "../../../@shared/domain/value-object/id.value-object"
+import Invoice from "../../domain/invoice"
+import InvoiceItems from "../../domain/invoiceItems";
 import FindInvoiceUseCase from "./find-invoice.usecase";
+
+
+const rawItems = [
+  { id: "1", name: "Item 1", price: 100 },
+  { id: "2", name: "Item 2", price: 150 },
+];
+const items = rawItems.map(item => new InvoiceItems({
+  id: new Id(item.id),
+  name: item.name,
+  price: item.price
+}));
+
 
 const invoice = new Invoice({
   id: new Id("1"),
   name: "Invoice 1",
-  document: "document 1",
-  address: new Address({
-      street: "street 1",
-      number: "000",
-      complement: "apartment 1",
-      city: "city 1",
-      state: "state 1",
-      zipCode: "00000",
-  }),
-  items: [
-    new Product({ id: new Id("1"), name: "item 1", price: 10 }), 
-    new Product({ id: new Id("2"), name: "item 2", price: 20 }),
-  ],
-});
+  document: "1234-5678",
+  street: "Rua 123",
+  number: "99",
+  complement: "Casa Verde",
+  city: "Criciúma",
+  state: "SC",
+  zipCode: "88888-888",
+  items: items
+})
 
 const MockRepository = () => {
+
   return {
     generate: jest.fn(),
-    find: jest.fn().mockReturnValue(Promise.resolve(invoice)),
-  };
-};
+    find: jest.fn().mockReturnValue(Promise.resolve(invoice))
+  }
+}
 
-describe("Find Invoice Usecase unit test", () => {
-  it("should find a invoice", async () => {
-    const repository = MockRepository();
-    const usecase = new FindInvoiceUseCase(repository);
+describe("Find invoice use case unit test", () => {
+
+  it("should find an invoice", async () => {
+
+    const repository = MockRepository()
+    const usecase = new FindInvoiceUseCase(repository)
 
     const input = {
-      id: "1",
-    };
+      id: "1"
+    }
 
-    const result = await usecase.execute(input);
+    const result = await usecase.execute(input)
 
-    expect(repository.find).toHaveBeenCalled();
-    expect(result.id).toEqual(input.id);
-    expect(result.name).toEqual(invoice.name);
-    expect(result.document).toEqual(invoice.document);
-    expect(result.address).toEqual(invoice.address);    
-    expect(result.items).toStrictEqual([
-      { 
-        id: invoice.items[0].id.id, 
-        name: invoice.items[0].name, 
-        price: invoice.items[0].price,
-      }, 
-      { 
-        id: invoice.items[1].id.id, 
-        name: invoice.items[1].name, 
-        price: invoice.items[1].price,
-      }, 
-    ]);
-
-  });
-});
+    expect(repository.find).toHaveBeenCalled()
+    expect(result.id).toEqual(input.id)
+    expect(result.name).toEqual(invoice.name)
+    expect(result.address.street).toEqual(invoice.street)
+    expect(result.address.number).toEqual(invoice.number)
+    expect(result.address.complement).toEqual(invoice.complement)
+    expect(result.address.city).toEqual(invoice.city)
+    expect(result.address.state).toEqual(invoice.state)
+    expect(result.address.street).toEqual(invoice.street)
+    expect(result.address.zipCode).toEqual(invoice.zipCode)
+    expect(result.items.length).toEqual(2)
+    expect(result.createdAt).toEqual(invoice.createdAt)
+  })
+})

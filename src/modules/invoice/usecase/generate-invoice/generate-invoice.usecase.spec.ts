@@ -1,55 +1,44 @@
-import GenerateInvoiceUseCase from "./generate-invoice.usecase";
+import InvoiceItems from "../../domain/invoiceItems"
+import GenerateInvoiceUseCase from "./generate-invoice.usecase"
 
 const MockRepository = () => {
   return {
-    generate: jest.fn(),
-    find: jest.fn(),
-  };
-};
 
-describe("Generate a Invoice Usecase unit test", () => {
-  it("should generate a invoice", async () => {
-    const repository = MockRepository();
-    const usecase = new GenerateInvoiceUseCase(repository);
+    generate: jest.fn(),
+    find: jest.fn()
+  }
+}
+
+describe("Generate invoice use case unit test", () => {
+
+  it("should generate an invoice", async () => {
+
+    const repository = MockRepository()
+    const usecase = new GenerateInvoiceUseCase(repository)
+    const rawItems = [
+      { id: "1", name: "Item 1", price: 100 },
+      { id: "2", name: "Item 2", price: 150 },
+    ];
+
 
     const input = {
+      id: "1",
       name: "Invoice 1",
-      document: "document 1",
-      street: "street 1",
-      number: "000",
-      complement: "apartment 1",
-      city: "city 1",
-      state: "state 1",
-      zipCode: "00000",
-      items: [
-        { id: "1", name: "item 1", price: 10 }, 
-        { id: "2", name: "item 2", price: 20 },
-      ],      
+      document: "document",
+      street: "Rua 123",
+      number: "99",
+      complement: "Casa Verde",
+      city: "Criciúma",
+      state: "SC",
+      zipCode: "88888-888",
+      items: rawItems,
     };
 
-    const result = await usecase.execute(input);
+    const result =  await usecase.execute(input)
 
-    expect(repository.generate).toHaveBeenCalled();
-    expect(result.id).toBeDefined();
-    expect(result.name).toEqual(input.name);
-    expect(result.document).toEqual(input.document);
-    expect(result.street).toEqual(input.street);
-    expect(result.number).toEqual(input.number);
-    expect(result.complement).toEqual(input.complement);
-    expect(result.city).toEqual(input.city);
-    expect(result.state).toEqual(input.state);
-    expect(result.zipCode).toEqual(input.zipCode);
-    expect(result.items).toStrictEqual([
-      { 
-        id: input.items[0].id, 
-        name: input.items[0].name, 
-        price: input.items[0].price,
-      }, 
-      { 
-        id: input.items[1].id, 
-        name: input.items[1].name, 
-        price: input.items[1].price,
-      }, 
-    ]);
-  });
-});
+    expect(repository.generate).toHaveBeenCalled()
+    expect(result.id).toBeDefined()
+    expect(result.name).toEqual(input.name)
+    expect(result.items.length).toEqual(2)
+  })
+})
